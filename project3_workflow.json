@@ -1,0 +1,1986 @@
+{
+  "name": "Project3",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 15,
+              "unit": "minutes"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2538a0dc-525d-445a-92d7-5b8274ea2810",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "W3IL2bwvnNH5HC8B",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "={{ $binary[Object.keys($binary)[0]] }}",
+        "destinationKey": "extracted_text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        -112
+      ],
+      "id": "276222d1-1849-4302-8aa4-c19eaed83d6e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "$binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "380b02c5-4412-4f7e-ac05-ec3aa7e5fdf9",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a503a9c-1df6-4816-815b-785506738681",
+              "name": "isMarkdown",
+              "value": "={{ $binary[Object.keys($binary)[0]].fileName.endsWith('.md') }}",
+              "type": "boolean"
+            },
+            {
+              "id": "4fddc34a-2b2c-46fd-b277-0d9eb6977cc7",
+              "name": "isImage",
+              "value": "={{ $binary[Object.keys($binary)[0]].mimeType.startsWith('image/') }}",
+              "type": "boolean"
+            },
+            {
+              "id": "3ea2dc38-9f11-4e43-a28f-78fba80ba5cc",
+              "name": "fileName",
+              "value": "={{ $binary[Object.keys($binary)[0]].fileName }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "04294882-4f61-4bf7-a7b0-37bb7e2009a7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.isMarkdown }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "04543e36-8eea-4cd4-9d46-5aa7d57907e7"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5cc00d15-f81d-4522-9dc3-0bba7bbfd2bc",
+                    "leftValue": "={{ $json.isImage }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        624,
+        0
+      ],
+      "id": "60d2f2c6-2311-4cfc-a3cc-0e7f3197f3b9",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are given a picture of damage on car parts.\nDescribe and classify the damage following this structure:\n\nFirst, a brief paragraph describing the damage seen.\n\n## Possible causes:\n(list of possible causes for the damage)\n\n## Possible consequences:\n(list of possible consequences of the damage)\n\n## Possible measures to prevent it:\n(list of possible ways to prevent the damage from a design or fabrication perspecive)\n\nRespond ONLY to the question in the given format. No follow-up questions or additional topics"
+            },
+            {
+              "type": "image",
+              "imageType": "base64",
+              "binaryPropertyName": "={{ $binary[Object.keys($binary)[0]] }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2880,
+        32
+      ],
+      "id": "cbf7fab2-38e0-4125-a788-35a0878ef26a",
+      "name": "Analyze Images",
+      "credentials": {
+        "openAiApi": {
+          "id": "nGqWVzoMnfwoB9VX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a helpful assistant that processes reports from tests of mechanical components.\n\nAnalyze the provided text and extract, for each component-related issue (ignore test-bench, operator etc related issues), the following information:\n- Description\n- Parts affected\n- Severity\n- Picture\n\nReturn the result as structured JSON:\n{\"Date\": date, \"Model\": model, \"Incidences\": {\"Description_1\": {\"Parts_affected\": [\"Part_1\", \"Part_2\", ...], \"Serverity\": \"...\", \"Pictures\": \"Pic\"}, \"Description_2\": {...}}}"
+            },
+            {
+              "content": "=Analyze {{$json.extracted_text}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1072,
+        -112
+      ],
+      "id": "bc02c512-36d6-4624-b339-77af1a3e4e32",
+      "name": "Analyze Report",
+      "credentials": {
+        "openAiApi": {
+          "id": "nGqWVzoMnfwoB9VX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "='1XojTC9Yw5DfTNqOwEIyJPBMSmGbU06iH' in parents and mimeType = 'application/vnd.google-apps.folder'",
+        "returnAll": true,
+        "filter": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        944,
+        -400
+      ],
+      "id": "e56b9a1f-db34-485b-b29d-5b80e8d862a0",
+      "name": "Existing issues",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw =\n  $json.output[0].content[0].text;\n\nreturn [\n  {\n    json: JSON.parse(raw)\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -112
+      ],
+      "id": "4551f630-4b22-4f64-a80c-dad22f9b1096",
+      "name": "Structured new report"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a semantic matching assistant. You will be given two lists of technical defect/incidence category names. Your job is to decide if any of the existing folders semantically matches the incidence name, even if the wording differs. Make sure that both the type of damage and the parts mentioned match. Make sure to diferentiate between the different possible failure modes in the same part and classify them into different folders.\n\nExamples and warnings:\n- Synonims like \"corrosion\" and \"rust\" should be matched.\n- Be careful with the described parts: \"cracked window\" is not the same as \"crack in taillight\".\n\nRespond ONLY with a valid JSON array, no explanation, no markdown. Each element must follow this structure:\n- \"incidence\": the original incidence name\n- \"folder_name\": the matched folder name, or null if no match found."
+            },
+            {
+              "content": "=Folder list:\n{{ $json.availableFolders }}\n\nIncidence list:\n{{ $json.reportedIssues }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        2320,
+        -384
+      ],
+      "id": "c3e43eca-fac2-45c2-8f8a-6e3dff63ab95",
+      "name": "Folder matching",
+      "credentials": {
+        "openAiApi": {
+          "id": "nGqWVzoMnfwoB9VX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n\n// Navigate to the text field\nconst textString = item.output[0].content[0].text;\n\n// Parse the JSON string into a real JSON array\nconst parsed = JSON.parse(textString);\n\nreturn parsed.map(entry => ({ json: entry }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        -384
+      ],
+      "id": "364f64ba-df68-4f87-8c55-23cca507c2ec",
+      "name": "Post-process folder matching"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.folderName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1XojTC9Yw5DfTNqOwEIyJPBMSmGbU06iH",
+          "mode": "list",
+          "cachedResultName": "Bootcamp_Project_3",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1XojTC9Yw5DfTNqOwEIyJPBMSmGbU06iH"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3344,
+        -544
+      ],
+      "id": "2b927d81-0688-4395-bfe0-254dac71b4f6",
+      "name": "Create folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.all().map(item => item.json);\n\nconst result = input\n  .filter(item => item.folder_name === null)\n  .map(item => ({\n    folderName: item.incidence\n  }));\n\nreturn result.map(item => ({ json: item }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        -384
+      ],
+      "id": "90a73988-7572-47e6-8106-5857bbd68fd5",
+      "name": "Folders to create",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst updated = items.map(item => ({\n  ...item.json,\n  folder_name: item.json.folder_name === null ? item.json.incidence : item.json.folder_name\n}));\n\nreturn updated.map(el => ({ json: el }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        -224
+      ],
+      "id": "b188efe4-98e7-47e1-a7bd-8c0814b2d653",
+      "name": "Incidence-folder pairs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f296ae6f-48ea-4907-9d02-98af07d506b9",
+              "name": "text",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3152,
+        32
+      ],
+      "id": "cb72500b-ece5-4960-b6ab-990bd5d2672a",
+      "name": "Post-processing image analysis"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b2fe78b6-4a09-4a3f-9c0a-b6c9629b4c96",
+              "name": "content",
+              "value": "=# {{ $json.name.toUpperCase() }}\\n\\n\n\n## GENERAL DATA\\n\\n\n- **Models affected:**\\n\\n\n- **Parts affected:**\\n\\n\n- **Last modification:**\\n\\n\n\n## DESCRIPTION OF THE PROBLEM\\n\\n\n\n### Possible causes:\\n\\n\n\n### Possible consequences:\\n\\n\n\n### Possible measures to prevent it:",
+              "type": "string"
+            },
+            {
+              "id": "5dd11c1d-8f09-4b66-8f6d-a3ceb89cef3b",
+              "name": "fileName",
+              "value": "=report {{ $json.name.toLowerCase() }}.md",
+              "type": "string"
+            },
+            {
+              "id": "5330746d-82eb-4d02-a5b7-919211604101",
+              "name": "folderId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3504,
+        -544
+      ],
+      "id": "0e507446-eb74-402b-aa60-d4d5d3531759",
+      "name": "New md file"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.content }}",
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.folderId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3664,
+        -544
+      ],
+      "id": "074967ff-ea0b-4965-aefd-510f5ef01fac",
+      "name": "Create file from text",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1888,
+        -384
+      ],
+      "id": "bd250a9e-c24a-4e14-b8e7-052c89d270d4",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      availableFolders: items.map(item => item.json.name)\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        -400
+      ],
+      "id": "46dfe1e5-e956-4d3c-b69d-6f3e56999e4d",
+      "name": "Available folders"
+    },
+    {
+      "parameters": {
+        "jsCode": "const availableFolders = items.find(i => i.json.availableFolders)?.json.availableFolders || [];\nconst reportedIssues = items.find(i => i.json.reportedIssues)?.json.reportedIssues || [];\n\nreturn [\n  {\n    json: {\n      availableFolders,\n      reportedIssues\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        -384
+      ],
+      "id": "326fa5d3-a872-43b1-91ca-2c8f5c1edcc9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e298aea-5ece-4ca2-b521-734eeda8aa3b",
+              "name": "date",
+              "value": "={{ $json.Date }}",
+              "type": "string"
+            },
+            {
+              "id": "a9956919-e3ea-475f-866d-d5dfa9aa129e",
+              "name": "model",
+              "value": "={{ $json.Model }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2752,
+        288
+      ],
+      "id": "62c98b85-b100-444e-abd1-7a86f4a3562b",
+      "name": "Metadata"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9c6b65d1-1fd0-4711-b74e-5dfa06001007",
+              "name": "reportedIssues",
+              "value": "={{ Object.keys($json.Incidences) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1616,
+        -304
+      ],
+      "id": "debf2415-6cd3-45c1-8781-8ce8a3d34059",
+      "name": "List issues"
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = [];\n\nfor (const item of items) {\n  const incidences = item.json.Incidences;\n\n  for (const [incidence, value] of Object.entries(incidences)) {\n    output.push({\n      json: {\n        incidence,\n        parts_affected: value.Parts_affected,\n        severity: value.Serverity,   // note typo in input\n        picture: value.Pictures,\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        -112
+      ],
+      "id": "6095e040-e9e0-4623-86db-660987bf6278",
+      "name": "JSONs issues"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "92833294-f1b0-45be-b6e1-a6bbc0ffbd89",
+              "leftValue": "={{ $json.folderName !== undefined }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3152,
+        -384
+      ],
+      "id": "ea1f6d01-93d8-429f-b959-5e91f5fbc7aa",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3856,
+        -384
+      ],
+      "id": "9ca8ad20-105a-4842-9c20-b0e784e56519",
+      "name": "Wait while folders are created"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "incidence",
+        "joinMode": "enrichInput2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4144,
+        -144
+      ],
+      "id": "4810f0b7-7c5f-405f-94a6-219a3d6cd5b4",
+      "name": "Sync folder structure and issue processing"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "incidence",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3152,
+        -128
+      ],
+      "id": "a3eaa41f-7f74-49e3-9d76-943c869e2fc4",
+      "name": "Sync issue descriptions and folder assignation"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4000,
+        48
+      ],
+      "id": "2c3ed9d9-0578-4935-972b-d76c6d66af42",
+      "name": "Description with image name"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "picture",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4384,
+        -16
+      ],
+      "id": "75573958-083c-4eab-b88d-935036a628b5",
+      "name": "Add folder and image data"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "='1XojTC9Yw5DfTNqOwEIyJPBMSmGbU06iH' in parents and mimeType = 'application/vnd.google-apps.folder'",
+        "returnAll": true,
+        "filter": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4624,
+        -128
+      ],
+      "id": "296ab826-32fe-468a-ab5d-80eea28a91ec",
+      "name": "Existing issues1",
+      "executeOnce": true,
+      "retryOnFail": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "folder_name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5056,
+        -32
+      ],
+      "id": "431bdf5a-56be-4ae8-80b3-9fb5d238f4df",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9681c0a8-6010-4e7a-9930-1643839860b8",
+              "name": "folder_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "82105433-5194-4646-a61a-63318df51be1",
+              "name": "folder_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4832,
+        -128
+      ],
+      "id": "f75ab624-c968-44d8-95e6-fcc0e886ce2c",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.folder_id }}",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        5296,
+        -160
+      ],
+      "id": "4ff2b5b1-bb99-4c1f-9cc5-e23ead67b0ad",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e7bda433-038b-42d6-9f16-8ed5356c8ec8",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": ".md",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5488,
+        -160
+      ],
+      "id": "cf10b962-e4f0-4e79-a8ab-7b0b01f31e30",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        5728,
+        -176
+      ],
+      "id": "30f51533-04a3-403c-adf0-79984a0c6981",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "destinationKey": "old_text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        5936,
+        -176
+      ],
+      "id": "38d02889-08a5-4cc9-9239-95b423740dc1",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6160,
+        80
+      ],
+      "id": "2a8f1786-2316-4fb9-b1d6-8bfeb509c686",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "changeFileContent": true,
+        "newUpdatedFileName": "={{ $json.file_name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        7776,
+        320
+      ],
+      "id": "66e52693-0fbc-44ec-9d47-a98aa45e1f1f",
+      "name": "Update file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "id"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are given two blocks of text. Combine them keeeping the structure of the texts. Make sure to keep all the information from both sources (without repeating semantically equivalent items)\n\nUpdate the \"General data\" (parts, models, date) with the information given.\n\nRespond ONLY with the text, no explanation, no markdown."
+            },
+            {
+              "content": "=Old text:\n{{ $json.old_text }}\n\nNew text:\n{{ $json.text }}\n\nParts affected (add to existing without repeating):\n{{ $json.parts_affected }}\n\nDate (keep latest):\n{{ $json.date }}\n\nModel (add to existing without repeating):\n{{ $json.model }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        6672,
+        96
+      ],
+      "id": "b09a55ef-1acf-43d8-b40b-c0116abbc8a1",
+      "name": "Text update",
+      "credentials": {
+        "openAiApi": {
+          "id": "nGqWVzoMnfwoB9VX",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "text",
+        "options": {
+          "fileName": "={{ $json.file_name }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        7344,
+        240
+      ],
+      "id": "e6d415d3-0615-4837-a23a-aa65a5ee5b03",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7120,
+        304
+      ],
+      "id": "d0096897-f230-4f3a-b003-54069c57edec",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bead8666-c1a7-4b27-9d03-7e29b151f645",
+              "name": "text",
+              "value": "={{ $json.output[0].content[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6944,
+        96
+      ],
+      "id": "2469905e-6a8d-4a3c-a3d8-1f779553c2f0",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "804114ea-1ea0-47e6-9961-2720402bd07b",
+              "name": "folder_id",
+              "value": "={{ $json.folder_id }}",
+              "type": "string"
+            },
+            {
+              "id": "1875107e-d533-4fc9-a3d8-ea09f740a3b9",
+              "name": "folder_name",
+              "value": "={{ $json.folder_name }}",
+              "type": "string"
+            },
+            {
+              "id": "74020b1b-aa50-4302-97c3-994184ef7f1b",
+              "name": "incidence",
+              "value": "={{ $json.incidence }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6576,
+        240
+      ],
+      "id": "7200fff7-b514-43c6-871d-6dc16d5ae00c",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7a89232d-f0f6-4692-879c-66a1434e2aff",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "989da264-8806-4ff0-b7d5-a45319b5866c",
+              "name": "file_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6208,
+        352
+      ],
+      "id": "4d62f1c2-6338-46fb-9b85-35b3202af097",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7568,
+        320
+      ],
+      "id": "5f377411-c9be-4559-94e3-ea30df6cf128",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40306db7-4991-496c-b388-783414629b71",
+              "name": "folder_id",
+              "value": "={{ $json.folder_id }}",
+              "type": "string"
+            },
+            {
+              "id": "2bb15ddf-41e0-4376-af96-7f667cade0a8",
+              "name": "folder_name",
+              "value": "={{ $json.folder_name }}",
+              "type": "string"
+            },
+            {
+              "id": "2750581b-4137-4721-a88f-5957eeb866e9",
+              "name": "file_id",
+              "value": "={{ $json.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "82a6df8c-e178-4812-9048-a1a363fb4745",
+              "name": "file_name",
+              "value": "={{ $json.file_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        7344,
+        416
+      ],
+      "id": "ce9f6b5a-7d38-4742-85ed-090eb5471bca",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6384,
+        96
+      ],
+      "id": "d4ad71ea-902a-486f-aee2-764d9aa17f71",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U0ATSS60P51",
+          "mode": "list",
+          "cachedResultName": "cmartinezboto"
+        },
+        "text": "=📩 New report processed",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        8160,
+        480
+      ],
+      "id": "bbf2b5f4-90cc-4309-bc4d-19941d716fd4",
+      "name": "Send a message",
+      "webhookId": "f4629efe-033e-4595-8ad6-4c7a17ddada1",
+      "executeOnce": true,
+      "credentials": {
+        "slackApi": {
+          "id": "FnVkIHf9RGnWVjZB",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45081230-395d-4902-94c1-20527c03931a",
+              "name": "folder_name",
+              "value": "={{ $json.folder_name }}",
+              "type": "string"
+            },
+            {
+              "id": "cfda884d-6c81-4c99-b34a-a80c9a062b06",
+              "name": "picture",
+              "value": "={{ $json.picture }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5424,
+        400
+      ],
+      "id": "d551044b-dda6-45aa-957c-53b481b5ac1d",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "picture",
+              "field2": "fileName"
+            }
+          ]
+        },
+        "joinMode": "enrichInput1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        6656,
+        608
+      ],
+      "id": "ce28f6c6-d82f-467e-ac9a-154a95913764",
+      "name": "Merge6"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => ({\n  json: {\n    picture: item.json.fileName\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3392,
+        160
+      ],
+      "id": "33e63d70-f9c8-489f-8882-1848ffe43886",
+      "name": "Image file names"
+    },
+    {
+      "parameters": {
+        "includeOtherFields": true,
+        "include": "except",
+        "excludeFields": "isMarkdown, isImage, fileName",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        6864,
+        608
+      ],
+      "id": "ea6161d8-8895-4868-96fb-b3e13788666c",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "folder_name",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7344,
+        592
+      ],
+      "id": "32dec108-a9c7-4dc7-b0a0-a4387c6cca7a",
+      "name": "Merge7"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "={{ Object.keys($binary)[0] }}",
+        "name": "={{ $json.picture }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.folder_id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        7536,
+        592
+      ],
+      "id": "bc072060-e793-4901-9e52-e612c14e941c",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "jSwYlqAZiLDYbeii",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "output": "empty"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        7968,
+        480
+      ],
+      "id": "d1b87df9-4765-4d86-b01c-c649e20004ce",
+      "name": "Merge8"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Existing issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Analyze Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze Images",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Image file names",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Report": {
+      "main": [
+        [
+          {
+            "node": "Structured new report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing issues": {
+      "main": [
+        [
+          {
+            "node": "Available folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured new report": {
+      "main": [
+        [
+          {
+            "node": "List issues",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Metadata",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "JSONs issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder matching": {
+      "main": [
+        [
+          {
+            "node": "Post-process folder matching",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post-process folder matching": {
+      "main": [
+        [
+          {
+            "node": "Folders to create",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Incidence-folder pairs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folders to create": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Images": {
+      "main": [
+        [
+          {
+            "node": "Post-processing image analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create folder": {
+      "main": [
+        [
+          {
+            "node": "New md file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New md file": {
+      "main": [
+        [
+          {
+            "node": "Create file from text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create file from text": {
+      "main": [
+        [
+          {
+            "node": "Wait while folders are created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Available folders": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Folder matching",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List issues": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "JSONs issues": {
+      "main": [
+        [
+          {
+            "node": "Sync issue descriptions and folder assignation",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Incidence-folder pairs": {
+      "main": [
+        [
+          {
+            "node": "Sync issue descriptions and folder assignation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create folder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait while folders are created",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Wait while folders are created": {
+      "main": [
+        [
+          {
+            "node": "Sync folder structure and issue processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync issue descriptions and folder assignation": {
+      "main": [
+        [
+          {
+            "node": "Sync folder structure and issue processing",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Post-processing image analysis": {
+      "main": [
+        [
+          {
+            "node": "Description with image name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync folder structure and issue processing": {
+      "main": [
+        [
+          {
+            "node": "Add folder and image data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Description with image name": {
+      "main": [
+        [
+          {
+            "node": "Add folder and image data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Add folder and image data": {
+      "main": [
+        [
+          {
+            "node": "Existing issues1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing issues1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text update": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Update file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Metadata": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "Text update",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update file": {
+      "main": [
+        [
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image file names": {
+      "main": [
+        [
+          {
+            "node": "Description with image name",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge6": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "Merge7",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge7": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge8": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f0e85582-ffbc-494c-bc8e-4f4e3aa19964",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22da431d4cf31791a8cb92db8a21ea7c2a3f630659701fa99f91fb1590ee6312"
+  },
+  "id": "XHYv3AovRHlUgJlD",
+  "tags": []
+}
